@@ -1,0 +1,28 @@
+version: 2.1
+
+jobs:
+  mock-test:
+    docker:
+      - image: cimg/base:stable
+    resource_class: small
+    parallelism: 4
+    steps:
+      - checkout
+      - run:
+          name: Spin up dependencies
+          command: |
+            # mock function returns exit code based on $CIRCLE_NODE_INDEX
+            function mock_run_container { exit $(expr $CIRCLE_NODE_INDEX % 2) }
+            
+            if ! mock_run_container ; then
+              sh ./wait_for_other_nodes.sh
+            fi
+      - run:
+          name: Run tests
+          command: |
+            sleep 5
+
+workflows:
+  mark-job-succeed:
+    jobs:
+      - mock-test
