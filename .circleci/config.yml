@@ -21,16 +21,25 @@ jobs:
               exit 1
             fi
 
+            N=10
+
             # NOTE: only to be run on 1st node
             if [ 0 -eq $CIRCLE_NODE_INDEX ]; then
               # wait on other nodes...
-              while true; do
-                if $(curl -H "Circle-Token: $CIRCLE_TOKEN" "https://circleci.com/api/v2/project/github/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/job/${CIRCLE_BUILD_NUM}" | jq -e '.parallel_runs[1:] | map(select(.status == "running")) | length == 0'); then
+              while [ $N -gt 0 ]; do
+                if $(curl -H "Circle-Token: $CIRCLE_TOKEN" -s "https://circleci.com/api/v2/project/github/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/job/${CIRCLE_BUILD_NUM}" | jq -e '.parallel_runs[1:] | map(select(.status == "running")) | length == 0'); then
                   echo "all nodes completed; either success, failed or canceled"
+                  echo "ALL DONE; DO SOMETHING HERE!"
                   break
                 else
-                  echo "some nodes are still running... wait out..."
-                  sleep 5
+                  N=$(( $N - 1 ))
+                  # at this point, while loop ended
+                  if [ 0 -eq $N ]; then
+                    echo "Exhausted waiting on nodes to complete!" && exit 1
+                  else
+                    echo "some nodes are still running... wait out..."
+                    sleep 5
+                  fi
                 fi
               done
             fi
