@@ -16,6 +16,11 @@ jobs:
       - run:
           name: fan-in summary operation
           command: |
+            if [ -z "${CIRCLE_TOKEN}" ]; then
+              echo "No CircleCI API token found; Exiting (error)"
+              exit 1
+            fi
+
             # NOTE: only to be run on 1st node
             if [ 0 -eq $CIRCLE_NODE_INDEX ]; then
               # wait on other nodes...
