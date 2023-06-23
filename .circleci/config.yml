@@ -29,11 +29,12 @@ jobs:
               while [ $N -gt 0 ]; do
                 if $(curl -H "Circle-Token: $CIRCLE_TOKEN" -s "https://circleci.com/api/v2/project/github/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/job/${CIRCLE_BUILD_NUM}" | jq -e '.parallel_runs[1:] | map(select(.status == "running")) | length == 0'); then
                   echo "all nodes completed; either success, failed or canceled"
+                  # TODO: please implement your logic below
+                  # IMPORTANT: you may need to fetch / aggregate the results from each node accordingly
                   echo "ALL DONE; DO SOMETHING HERE!"
                   break
                 else
                   N=$(( $N - 1 ))
-                  # at this point, while loop ended
                   if [ 0 -eq $N ]; then
                     echo "Exhausted waiting on nodes to complete!" && exit 1
                   else
