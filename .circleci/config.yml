@@ -1,9 +1,9 @@
 version: 2.1
 
 jobs:
-  wait-on-nodes:
+  halt:
     docker:
-      - image: cimg/base:stable
+      - image: cimg/node:18.16.0
     resource_class: small
     parallelism: 3
     steps:
@@ -14,38 +14,16 @@ jobs:
             # NOTE: $CIRCLE_NODE_INDEX is zero-based
             sleep $((($CIRCLE_NODE_INDEX + 1) * 10))
       - run:
-          name: fan-in summary operation
+          name: one node marking job as done
           command: |
-            if [ -z "${CIRCLE_TOKEN}" ]; then
-              echo "No CircleCI API token found; Exiting (error)"
-              exit 1
-            fi
-
-            N=10
-
-            # NOTE: only to be run on 1st node
-            if [ 0 -eq $CIRCLE_NODE_INDEX ]; then
-              # wait on other nodes...
-              while [ $N -gt 0 ]; do
-                if $(curl -H "Circle-Token: $CIRCLE_TOKEN" -s "https://circleci.com/api/v2/project/github/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/job/${CIRCLE_BUILD_NUM}" | jq -e '.parallel_runs[1:] | map(select(.status == "running")) | length == 0'); then
-                  echo "all nodes completed; either success, failed or canceled"
-                  # TODO: please implement your logic below
-                  # IMPORTANT: you may need to fetch / aggregate the results from each node accordingly
-                  echo "ALL DONE; DO SOMETHING HERE!"
-                  break
-                else
-                  N=$(( $N - 1 ))
-                  if [ 0 -eq $N ]; then
-                    echo "Exhausted waiting on nodes to complete!" && exit 1
-                  else
-                    echo "some nodes are still running... wait out..."
-                    sleep 5
-                  fi
-                fi
-              done
+            if [ 1 -eq $CIRCLE_NODE_INDEX ]; then
+              circleci-agent step halt
+            else
+              echo "running some more steps!"
+              sleep 10
             fi
 
 workflows:
   mark-job-succeed:
     jobs:
-      - wait-on-nodes
+      - halt
