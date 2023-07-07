@@ -27,6 +27,11 @@ jobs:
           name: halt accordingly
           command: |
             node halt.js
+            # circleci-agent step halt will continue the same commands within the run step.
+            # It’s essentially: halt the remaining steps in this job, but current step’s remaining commands will run.
+            echo "NOTE: this command is still run..."
+            sleep 3
+            echo "NOTE: this too, including the sleep earlier"
       - run:
           name: fail intentionally
           command: |
